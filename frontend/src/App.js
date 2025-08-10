@@ -8,7 +8,6 @@ import { investmentAPI } from './services/api';
 
 function App() {
   const [investments, setInvestments] = useState([]);
-  const [editingInvestment, setEditingInvestment] = useState(null);
   const [monthlyAddition, setMonthlyAddition] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -37,23 +36,26 @@ function App() {
       await investmentAPI.create(investmentData);
       await loadInvestments();
       setError('');
-      // 可以添加成功提示
+      
+      console.log(`投资项目"${investmentData.name}"添加成功！`);
     } catch (error) {
       console.error('创建投资失败:', error);
       setError('添加投资失败，请重试');
-      throw error; // 重新抛出错误，让表单组件处理
+      throw error;
     }
   };
 
-  const handleUpdateInvestment = async (investmentData) => {
+  // 更新编辑处理函数，接收 id 和 data 参数
+  const handleUpdateInvestment = async (id, investmentData) => {
     try {
-      await investmentAPI.update(editingInvestment.id, investmentData);
-      setEditingInvestment(null);
+      await investmentAPI.update(id, investmentData);
       await loadInvestments();
       setError('');
+      
+      console.log(`投资项目"${investmentData.name}"更新成功！`);
     } catch (error) {
       console.error('更新投资失败:', error);
-      setError('更新投资失败，请重试');
+      setError(`更新投资项目"${investmentData.name}"失败，请重试`);
       throw error;
     }
   };
@@ -63,20 +65,12 @@ function App() {
       await investmentAPI.delete(id);
       await loadInvestments();
       setError('');
+      
+      console.log('投资项目删除成功！');
     } catch (error) {
       console.error('删除投资失败:', error);
       setError('删除投资失败，请重试');
     }
-  };
-
-  const handleEditInvestment = (investment) => {
-    setEditingInvestment(investment);
-    // 滚动到表单位置
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingInvestment(null);
   };
 
   const handleSettingsChange = (newMonthlyAddition) => {
@@ -117,14 +111,14 @@ function App() {
       <Settings onSettingsChange={handleSettingsChange} />
       
       <InvestmentForm
-        onSubmit={editingInvestment ? handleUpdateInvestment : handleCreateInvestment}
-        initialData={editingInvestment}
-        onCancel={handleCancelEdit}
+        onSubmit={handleCreateInvestment}
+        initialData={null}
+        onCancel={() => {}}
       />
       
       <InvestmentList
         investments={investments}
-        onEdit={handleEditInvestment}
+        onEdit={handleUpdateInvestment}
         onDelete={handleDeleteInvestment}
       />
       

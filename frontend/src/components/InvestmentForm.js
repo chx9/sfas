@@ -1,14 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
   const [formData, setFormData] = useState({
-    name: initialData?.name || '',
-    principal: initialData?.principal || '',
-    annual_rate: initialData?.annual_rate || ''
+    name: '',
+    principal: '',
+    annual_rate: ''
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 当 initialData 改变时，更新表单数据
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        principal: initialData.principal || '',
+        annual_rate: initialData.annual_rate || ''
+      });
+    } else {
+      setFormData({
+        name: '',
+        principal: '',
+        annual_rate: ''
+      });
+    }
+    setErrors({});
+  }, [initialData]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -21,7 +39,7 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
       newErrors.principal = '本金必须大于0';
     }
     
-    if (!formData.annual_rate || parseFloat(formData.annual_rate) < 0) {
+    if (formData.annual_rate === '' || parseFloat(formData.annual_rate) < 0) {
       newErrors.annual_rate = '年化收益率不能为负数';
     }
     
@@ -45,6 +63,7 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
         annual_rate: parseFloat(formData.annual_rate)
       });
       
+      // 只有在添加新投资时才清空表单
       if (!initialData) {
         setFormData({ name: '', principal: '', annual_rate: '' });
         setErrors({});
@@ -72,11 +91,23 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
     }
   };
 
+  const handleCancel = () => {
+    setFormData({ name: '', principal: '', annual_rate: '' });
+    setErrors({});
+    onCancel();
+  };
+
   return (
     <div className="section">
       <h3 className="section-title">
-        {initialData ? '编辑投资' : '添加新投资'}
+        {initialData ? `编辑投资 - ${initialData.name}` : '添加新投资'}
       </h3>
+      
+      {initialData && (
+        <div className="edit-notice">
+          <p>💡 正在编辑投资项目，您可以修改本金和年化收益率</p>
+        </div>
+      )}
       
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -109,6 +140,11 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
             disabled={isSubmitting}
           />
           {errors.principal && <div className="error-message">{errors.principal}</div>}
+          {initialData && (
+            <div className="field-help">
+              原本金: ¥{initialData.principal.toFixed(2)}
+            </div>
+          )}
         </div>
 
         <div className="form-group">
@@ -126,6 +162,11 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
             disabled={isSubmitting}
           />
           {errors.annual_rate && <div className="error-message">{errors.annual_rate}</div>}
+          {initialData && (
+            <div className="field-help">
+              原年化收益率: {initialData.annual_rate.toFixed(2)}%
+            </div>
+          )}
         </div>
 
         <div className="form-actions">
@@ -140,7 +181,7 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
           {initialData && (
             <button 
               type="button" 
-              onClick={onCancel} 
+              onClick={handleCancel} 
               className="btn btn-secondary"
               disabled={isSubmitting}
             >
@@ -151,10 +192,31 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
       </form>
 
       <style jsx>{`
+        .edit-notice {
+          background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+          border-left: 4px solid #2196f3;
+          padding: 15px;
+          margin-bottom: 20px;
+          border-radius: 4px;
+        }
+        
+        .edit-notice p {
+          margin: 0;
+          color: #1565c0;
+          font-weight: 500;
+        }
+        
         .error-message {
           color: #dc3545;
           font-size: 0.875rem;
           margin-top: 5px;
+        }
+        
+        .field-help {
+          color: #6c757d;
+          font-size: 0.875rem;
+          margin-top: 5px;
+          font-style: italic;
         }
         
         .form-control.error {
@@ -164,6 +226,14 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
         
         .form-actions {
           margin-top: 20px;
+          display: flex;
+          gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+          .form-actions {
+            flex-direction: column;
+          }
         }
       `}</style>
     </div>
