@@ -48,7 +48,7 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // 阻止表单默认提交行为
     
     if (!validateForm()) {
       return;

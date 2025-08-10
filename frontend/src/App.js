@@ -17,26 +17,36 @@ function App() {
   }, []);
 
   const loadInvestments = async () => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await investmentAPI.getAll();
-      setInvestments(response.data || []);
-    } catch (error) {
-      console.error('加载投资数据失败:', error);
-      setError('加载投资数据失败，请检查网络连接或刷新页面重试');
-    } finally {
-      setLoading(false);
+    if (!loading) {
+      // 如果不是初始加载，就不显示loading状态
+      try {
+        const response = await investmentAPI.getAll();
+        setInvestments(response.data || []);
+        setError('');
+      } catch (error) {
+        console.error('加载投资数据失败:', error);
+        setError('加载投资数据失败，请重试');
+      }
+    } else {
+      // 初始加载
+      try {
+        const response = await investmentAPI.getAll();
+        setInvestments(response.data || []);
+        setError('');
+      } catch (error) {
+        console.error('加载投资数据失败:', error);
+        setError('加载投资数据失败，请检查网络连接或刷新页面重试');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const handleCreateInvestment = async (investmentData) => {
     try {
       await investmentAPI.create(investmentData);
-      await loadInvestments();
+      await loadInvestments(); // 热刷新数据，不刷新页面
       setError('');
-      
       console.log(`投资项目"${investmentData.name}"添加成功！`);
     } catch (error) {
       console.error('创建投资失败:', error);
@@ -45,13 +55,11 @@ function App() {
     }
   };
 
-  // 更新编辑处理函数，接收 id 和 data 参数
   const handleUpdateInvestment = async (id, investmentData) => {
     try {
       await investmentAPI.update(id, investmentData);
-      await loadInvestments();
+      await loadInvestments(); // 热刷新数据，不刷新页面
       setError('');
-      
       console.log(`投资项目"${investmentData.name}"更新成功！`);
     } catch (error) {
       console.error('更新投资失败:', error);
@@ -63,9 +71,8 @@ function App() {
   const handleDeleteInvestment = async (id) => {
     try {
       await investmentAPI.delete(id);
-      await loadInvestments();
+      await loadInvestments(); // 热刷新数据，不刷新页面
       setError('');
-      
       console.log('投资项目删除成功！');
     } catch (error) {
       console.error('删除投资失败:', error);
