@@ -4,7 +4,8 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
   const [formData, setFormData] = useState({
     name: '',
     principal: '',
-    annual_rate: ''
+    annual_rate: '',
+    monthly_addition_enabled: true
   });
 
   const [errors, setErrors] = useState({});
@@ -16,13 +17,17 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
       setFormData({
         name: initialData.name || '',
         principal: initialData.principal || '',
-        annual_rate: initialData.annual_rate || ''
+        annual_rate: initialData.annual_rate || '',
+        monthly_addition_enabled: initialData.monthly_addition_enabled !== undefined 
+          ? initialData.monthly_addition_enabled 
+          : true
       });
     } else {
       setFormData({
         name: '',
         principal: '',
-        annual_rate: ''
+        annual_rate: '',
+        monthly_addition_enabled: true
       });
     }
     setErrors({});
@@ -60,12 +65,18 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
       await onSubmit({
         ...formData,
         principal: parseFloat(formData.principal),
-        annual_rate: parseFloat(formData.annual_rate)
+        annual_rate: parseFloat(formData.annual_rate),
+        monthly_addition_enabled: formData.monthly_addition_enabled
       });
       
       // 只有在添加新投资时才清空表单
       if (!initialData) {
-        setFormData({ name: '', principal: '', annual_rate: '' });
+        setFormData({ 
+          name: '', 
+          principal: '', 
+          annual_rate: '',
+          monthly_addition_enabled: true
+        });
         setErrors({});
       }
     } catch (error) {
@@ -76,10 +87,10 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     
     // 清除对应字段的错误
@@ -92,7 +103,12 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
   };
 
   const handleCancel = () => {
-    setFormData({ name: '', principal: '', annual_rate: '' });
+    setFormData({ 
+      name: '', 
+      principal: '', 
+      annual_rate: '',
+      monthly_addition_enabled: true
+    });
     setErrors({});
     onCancel();
   };
@@ -105,7 +121,7 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
       
       {initialData && (
         <div className="edit-notice">
-          <p>💡 正在编辑投资项目，您可以修改本金和年化收益率</p>
+          <p>💡 正在编辑投资项目，您可以修改所有投资参数</p>
         </div>
       )}
       
@@ -125,48 +141,79 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
           {errors.name && <div className="error-message">{errors.name}</div>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="principal">本金 (元) *</label>
-          <input
-            type="number"
-            id="principal"
-            name="principal"
-            value={formData.principal}
-            onChange={handleChange}
-            className={`form-control ${errors.principal ? 'error' : ''}`}
-            placeholder="请输入投资本金"
-            min="0"
-            step="0.01"
-            disabled={isSubmitting}
-          />
-          {errors.principal && <div className="error-message">{errors.principal}</div>}
-          {initialData && (
-            <div className="field-help">
-              原本金: ¥{initialData.principal.toFixed(2)}
-            </div>
-          )}
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="principal">本金 (元) *</label>
+            <input
+              type="number"
+              id="principal"
+              name="principal"
+              value={formData.principal}
+              onChange={handleChange}
+              className={`form-control ${errors.principal ? 'error' : ''}`}
+              placeholder="请输入投资本金"
+              min="0"
+              step="0.01"
+              disabled={isSubmitting}
+            />
+            {errors.principal && <div className="error-message">{errors.principal}</div>}
+            {initialData && (
+              <div className="field-help">
+                原本金: ¥{initialData.principal.toFixed(2)}
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="annual_rate">年化收益率 (%) *</label>
+            <input
+              type="number"
+              id="annual_rate"
+              name="annual_rate"
+              value={formData.annual_rate}
+              onChange={handleChange}
+              className={`form-control ${errors.annual_rate ? 'error' : ''}`}
+              placeholder="例如：3.5 表示3.5%的年化收益率"
+              min="0"
+              step="0.01"
+              disabled={isSubmitting}
+            />
+            {errors.annual_rate && <div className="error-message">{errors.annual_rate}</div>}
+            {initialData && (
+              <div className="field-help">
+                原年化收益率: {initialData.annual_rate.toFixed(2)}%
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="form-group">
-          <label htmlFor="annual_rate">年化收益率 (%) *</label>
-          <input
-            type="number"
-            id="annual_rate"
-            name="annual_rate"
-            value={formData.annual_rate}
-            onChange={handleChange}
-            className={`form-control ${errors.annual_rate ? 'error' : ''}`}
-            placeholder="例如：3.5 表示3.5%的年化收益率"
-            min="0"
-            step="0.01"
-            disabled={isSubmitting}
-          />
-          {errors.annual_rate && <div className="error-message">{errors.annual_rate}</div>}
-          {initialData && (
-            <div className="field-help">
-              原年化收益率: {initialData.annual_rate.toFixed(2)}%
+          <div className="checkbox-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="monthly_addition_enabled"
+                checked={formData.monthly_addition_enabled}
+                onChange={handleChange}
+                disabled={isSubmitting}
+                className="checkbox-input"
+              />
+              <span className="checkbox-text">
+                📈 参与每月追加投资
+              </span>
+            </label>
+            <div className="checkbox-help">
+              {formData.monthly_addition_enabled ? (
+                <span className="help-enabled">
+                  ✅ 该投资将按比例分配每月追加的资金
+                </span>
+              ) : (
+                <span className="help-disabled">
+                  ❌ 该投资不参与每月追加投资分配
+                </span>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         <div className="form-actions">
@@ -206,6 +253,54 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
           font-weight: 500;
         }
         
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+        
+        .checkbox-group {
+          background: #f8f9fa;
+          padding: 15px;
+          border-radius: 8px;
+          border: 1px solid #e9ecef;
+        }
+        
+        .checkbox-label {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          font-weight: 500;
+          margin-bottom: 8px;
+        }
+        
+        .checkbox-input {
+          width: 18px;
+          height: 18px;
+          margin-right: 10px;
+          cursor: pointer;
+        }
+        
+        .checkbox-text {
+          font-size: 16px;
+          color: #333;
+        }
+        
+        .checkbox-help {
+          margin-left: 28px;
+          font-size: 14px;
+        }
+        
+        .help-enabled {
+          color: #28a745;
+          font-weight: 500;
+        }
+        
+        .help-disabled {
+          color: #6c757d;
+          font-weight: 500;
+        }
+        
         .error-message {
           color: #dc3545;
           font-size: 0.875rem;
@@ -231,6 +326,11 @@ const InvestmentForm = ({ onSubmit, initialData = null, onCancel }) => {
         }
         
         @media (max-width: 768px) {
+          .form-row {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+          
           .form-actions {
             flex-direction: column;
           }

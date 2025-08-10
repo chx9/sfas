@@ -25,6 +25,7 @@ func createTables() {
         name TEXT NOT NULL,
         principal REAL NOT NULL,
         annual_rate REAL NOT NULL,
+        monthly_addition_enabled BOOLEAN DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`
 
@@ -44,4 +45,7 @@ func createTables() {
 
     // 初始化设置
     DB.Exec("INSERT OR IGNORE INTO settings (id, monthly_addition) VALUES (1, 0)")
+    
+    // 为现有的投资项目添加默认的 monthly_addition_enabled 字段
+    DB.Exec("ALTER TABLE investments ADD COLUMN monthly_addition_enabled BOOLEAN DEFAULT 1")
 }

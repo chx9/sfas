@@ -21,7 +21,10 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
     setEditData({
       name: investment.name,
       principal: investment.principal,
-      annual_rate: investment.annual_rate
+      annual_rate: investment.annual_rate,
+      monthly_addition_enabled: investment.monthly_addition_enabled !== undefined 
+        ? investment.monthly_addition_enabled 
+        : true
     });
     setErrors({});
   };
@@ -61,7 +64,8 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
       const updatedData = {
         name: editData.name.trim(),
         principal: parseFloat(editData.principal),
-        annual_rate: parseFloat(editData.annual_rate)
+        annual_rate: parseFloat(editData.annual_rate),
+        monthly_addition_enabled: editData.monthly_addition_enabled
       };
 
       await onEdit(editingId, updatedData);
@@ -121,6 +125,12 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
             <span className="summary-label">加权平均年化收益率:</span>
             <span className="summary-value">{formatPercentage(avgRate)}</span>
           </div>
+          <div className="summary-item">
+            <span className="summary-label">参与追加投资:</span>
+            <span className="summary-value">
+              {investments.filter(inv => inv.monthly_addition_enabled).length} / {investments.length}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -132,6 +142,7 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
               <th>投资名称</th>
               <th>本金 (元)</th>
               <th>年化收益率 (%)</th>
+              <th>每月追加</th>
               <th>占比</th>
               <th>预计年收益</th>
               <th>操作</th>
@@ -215,6 +226,32 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
                     )}
                   </td>
                   
+                  {/* 每月追加 */}
+                  <td className="investment-monthly-addition">
+                    {isEditing ? (
+                      <div className="edit-field">
+                        <label className="checkbox-label-inline">
+                          <input
+                            type="checkbox"
+                            checked={editData.monthly_addition_enabled || false}
+                            onChange={(e) => handleInputChange('monthly_addition_enabled', e.target.checked)}
+                            disabled={saving}
+                            className="checkbox-input-inline"
+                          />
+                          <span className="checkbox-text-inline">参与</span>
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="monthly-addition-status">
+                        {investment.monthly_addition_enabled ? (
+                          <span className="status-enabled">✅ 参与</span>
+                        ) : (
+                          <span className="status-disabled">❌ 不参与</span>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                  
                   {/* 占比 */}
                   <td className="investment-proportion">
                     {isEditing ? (
@@ -292,6 +329,9 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
               <td colSpan="2"><strong>合计</strong></td>
               <td><strong>{formatCurrency(totalPrincipal)}</strong></td>
               <td><strong>{formatPercentage(avgRate)}</strong></td>
+              <td><strong>
+                {investments.filter(inv => inv.monthly_addition_enabled).length} / {investments.length}
+              </strong></td>
               <td><strong>100.0%</strong></td>
               <td><strong>{formatCurrency(totalPrincipal * avgRate / 100)}</strong></td>
               <td>-</td>
@@ -303,10 +343,10 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
       <div className="list-tips">
         <h4>💡 操作提示</h4>
         <ul>
-          <li><strong>直接编辑：</strong>点击编辑按钮后可在表格中直接修改数据</li>
-          <li><strong>保存修改：</strong>编辑完成后点击保存按钮确认修改</li>
-          <li><strong>取消编辑：</strong>可以随时取消编辑，恢复原始数据</li>
-          <li><strong>单行编辑：</strong>同时只能编辑一个投资项目</li>
+          <li><strong>每月追加投资：</strong>勾选后该投资将参与每月追加资金的分配</li>
+          <li><strong>分配规则：</strong>每月追加资金只在勾选"参与"的投资项目间按本金比例分配</li>
+          <li><strong>直接编辑：</strong>点击编辑按钮后可在表格中直接修改所有数据</li>
+          <li><strong>实时计算：</strong>修改参数后预测数据会自动重新计算</li>
         </ul>
       </div>
 
@@ -321,7 +361,7 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
         
         .summary-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
           gap: 15px;
         }
         
@@ -351,7 +391,7 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
         
         .investment-table {
           width: 100%;
-          min-width: 900px;
+          min-width: 1000px;
         }
         
         .investment-table th {
@@ -378,6 +418,47 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
         
         .editing-row td {
           background-color: transparent;
+        }
+        
+        .investment-monthly-addition {
+          min-width: 100px;
+        }
+        
+        .monthly-addition-status {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        
+        .status-enabled {
+          color: #28a745;
+          font-weight: bold;
+          font-size: 0.9rem;
+        }
+        
+        .status-disabled {
+          color: #6c757d;
+          font-weight: bold;
+          font-size: 0.9rem;
+        }
+        
+        .checkbox-label-inline {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          justify-content: center;
+        }
+        
+        .checkbox-input-inline {
+          width: 16px;
+          height: 16px;
+          margin-right: 6px;
+          cursor: pointer;
+        }
+        
+        .checkbox-text-inline {
+          font-size: 12px;
+          color: #333;
         }
         
         .investment-index {
@@ -594,7 +675,7 @@ const InvestmentList = ({ investments, onEdit, onDelete }) => {
         
         @media (max-width: 768px) {
           .summary-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 10px;
           }
           

@@ -8,15 +8,16 @@ export const calculatePredictions = (investments, monthlyAddition = 0) => {
   const predictions = [];
   const years = 10;
   
-  // 计算总本金用于分配每月追加资金
-  const totalPrincipal = investments.reduce((sum, inv) => sum + inv.principal, 0);
+  // 只计算参与每月追加投资的项目的总本金
+  const participatingInvestments = investments.filter(inv => inv.monthly_addition_enabled);
+  const totalParticipatingPrincipal = participatingInvestments.reduce((sum, inv) => sum + inv.principal, 0);
   
   for (let year = 0; year <= years; year++) {
     let totalAssets = 0;
     const yearData = { year, investments: [], totalAssets: 0 };
     
     investments.forEach(investment => {
-      const { principal, annual_rate } = investment;
+      const { principal, annual_rate, monthly_addition_enabled } = investment;
       const annualRate = annual_rate / 100;
       const monthlyRate = annualRate / 12;
       const months = year * 12;
@@ -24,10 +25,10 @@ export const calculatePredictions = (investments, monthlyAddition = 0) => {
       // 本金复利增长
       let value = principal * Math.pow(1 + annualRate, year);
       
-      // 如果有每月追加投资且不是第0年
-      if (monthlyAddition > 0 && year > 0 && totalPrincipal > 0) {
-        // 按本金比例分配每月追加资金
-        const proportion = principal / totalPrincipal;
+      // 如果该投资参与每月追加投资且有每月追加金额且不是第0年
+      if (monthly_addition_enabled && monthlyAddition > 0 && year > 0 && totalParticipatingPrincipal > 0) {
+        // 按参与投资的本金比例分配每月追加资金
+        const proportion = principal / totalParticipatingPrincipal;
         const monthlyInvestment = monthlyAddition * proportion;
         
         // 使用年金现值公式计算每月追加投资的累计价值
@@ -43,7 +44,8 @@ export const calculatePredictions = (investments, monthlyAddition = 0) => {
       
       yearData.investments.push({
         name: investment.name,
-        value: Math.round(value * 100) / 100
+        value: Math.round(value * 100) / 100,
+        monthly_addition_enabled: monthly_addition_enabled
       });
       
       totalAssets += value;
@@ -64,7 +66,8 @@ export const calculatePredictions = (investments, monthlyAddition = 0) => {
 export const calculateDailyIncome = (investments) => {
   return investments.map(investment => ({
     name: investment.name,
-    dailyIncome: Math.round((investment.principal * investment.annual_rate / 100 / 365) * 100) / 100
+    dailyIncome: Math.round((investment.principal * investment.annual_rate / 100 / 365) * 100) / 100,
+    monthly_addition_enabled: investment.monthly_addition_enabled
   }));
 };
 
@@ -76,7 +79,8 @@ export const calculateDailyIncome = (investments) => {
 export const calculateMonthlyIncome = (investments) => {
   return investments.map(investment => ({
     name: investment.name,
-    monthlyIncome: Math.round((investment.principal * investment.annual_rate / 100 / 12) * 100) / 100
+    monthlyIncome: Math.round((investment.principal * investment.annual_rate / 100 / 12) * 100) / 100,
+    monthly_addition_enabled: investment.monthly_addition_enabled
   }));
 };
 
@@ -88,7 +92,8 @@ export const calculateMonthlyIncome = (investments) => {
 export const calculateYearlyIncome = (investments) => {
   return investments.map(investment => ({
     name: investment.name,
-    yearlyIncome: Math.round((investment.principal * investment.annual_rate / 100) * 100) / 100
+    yearlyIncome: Math.round((investment.principal * investment.annual_rate / 100) * 100) / 100,
+    monthly_addition_enabled: investment.monthly_addition_enabled
   }));
 };
 
@@ -140,4 +145,15 @@ export const calculateAverageRate = (investments) => {
  */
 export const calculateTotalPrincipal = (investments) => {
   return investments.reduce((sum, inv) => sum + inv.principal, 0);
+};
+
+/**
+ * 计算参与每月追加投资的总本金
+ * @param {Array} investments 投资列表
+ * @returns {number} 参与每月追加投资的总本金
+ */
+export const calculateParticipatingPrincipal = (investments) => {
+  return investments
+    .filter(inv => inv.monthly_addition_enabled)
+    .reduce((sum, inv) => sum + inv.principal, 0);
 };
