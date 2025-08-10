@@ -5,10 +5,11 @@ import {
   calculateDailyIncome, 
   calculateMonthlyIncome, 
   calculateYearlyIncome,
+  calculateTotalAnnualBonus,
   formatCurrency 
 } from '../utils/calculations';
 
-const PredictionChart = ({ investments, monthlyAddition }) => {
+const PredictionChart = ({ investments, monthlyAddition, bonuses = [] }) => {
   if (investments.length === 0) {
     return (
       <div className="section">
@@ -22,10 +23,11 @@ const PredictionChart = ({ investments, monthlyAddition }) => {
     );
   }
 
-  const predictions = calculatePredictions(investments, monthlyAddition);
+  const predictions = calculatePredictions(investments, monthlyAddition, bonuses);
   const dailyIncome = calculateDailyIncome(investments);
   const monthlyIncome = calculateMonthlyIncome(investments);
   const yearlyIncome = calculateYearlyIncome(investments);
+  const totalAnnualBonus = calculateTotalAnnualBonus(bonuses);
 
   const totalDailyIncome = dailyIncome.reduce((sum, item) => sum + item.dailyIncome, 0);
   const totalMonthlyIncome = monthlyIncome.reduce((sum, item) => sum + item.monthlyIncome, 0);
@@ -62,7 +64,7 @@ const PredictionChart = ({ investments, monthlyAddition }) => {
 
   return (
     <div className="section">
-      <h3 className="section-title">收益预测分析</h3>
+      <h3 className="section-title">📊 收益预测分析</h3>
       
       {/* 收益统计卡片 */}
       <div className="stats-grid">
@@ -101,15 +103,43 @@ const PredictionChart = ({ investments, monthlyAddition }) => {
             ))}
           </div>
         </div>
+
+        {totalAnnualBonus > 0 && (
+          <div className="stats-card bonus">
+            <h4>💰 年度奖金</h4>
+            <div className="stats-total">{formatCurrency(totalAnnualBonus)}</div>
+            <div className="stats-details">
+              {bonuses.map(bonus => (
+                <div key={bonus.id} className="stats-detail">
+                  {bonus.name}: {formatCurrency(bonus.amount)}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {monthlyAddition > 0 && (
-        <div className="alert alert-info">
-          <strong>💡 提示：</strong> 
-          已设置每月追加投资 {formatCurrency(monthlyAddition)}，
-          将按各投资项目本金比例自动分配。
-        </div>
-      )}
+      {/* 投资提示信息 */}
+      <div className="investment-info">
+        {monthlyAddition > 0 && (
+          <div className="info-item">
+            <strong>💡 每月追加投资：</strong> 
+            {formatCurrency(monthlyAddition)}，将按参与投资项目的本金比例自动分配
+          </div>
+        )}
+        {totalAnnualBonus > 0 && (
+          <div className="info-item">
+            <strong>🎁 奖金投资策略：</strong> 
+            年度总额 {formatCurrency(totalAnnualBonus)}，在各自发放月份立即投入投资，享受从投资月份开始的复利增长
+          </div>
+        )}
+        {bonuses.length > 0 && (
+          <div className="info-item">
+            <strong>📅 奖金发放时间：</strong> 
+            {bonuses.map(bonus => `${bonus.name}(${bonus.month}月)`).join('、')}
+          </div>
+        )}
+      </div>
 
       {/* 资产增长趋势图 */}
       <div className="chart-container">
@@ -213,8 +243,96 @@ const PredictionChart = ({ investments, monthlyAddition }) => {
           color: #333;
         }
         
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+        
+        .stats-card {
+          padding: 15px;
+          border-radius: 8px;
+          text-align: center;
+        }
+        
+        .stats-card.daily {
+          background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+          border-left: 4px solid #2196f3;
+        }
+        
+        .stats-card.monthly {
+          background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+          border-left: 4px solid #4caf50;
+        }
+        
+        .stats-card.yearly {
+          background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+          border-left: 4px solid #ff9800;
+        }
+        
+        .stats-card.bonus {
+          background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+          border-left: 4px solid #ffc107;
+        }
+        
+        .stats-card h4 {
+          margin: 0 0 15px 0;
+          color: #333;
+          font-size: 1.1rem;
+        }
+        
+        .stats-total {
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 10px;
+        }
+        
         .stats-details {
           margin-top: 10px;
+        }
+        
+        .stats-detail {
+          font-size: 0.9rem;
+          color: #666;
+          margin: 5px 0;
+        }
+        
+        .investment-info {
+          background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+          padding: 15px;
+          border-radius: 8px;
+          margin-bottom: 25px;
+          border-left: 4px solid #6c757d;
+        }
+        
+        .info-item {
+          margin-bottom: 10px;
+          color: #495057;
+          line-height: 1.5;
+        }
+        
+        .info-item:last-child {
+          margin-bottom: 0;
+        }
+        
+        .chart-container {
+          margin-top: 30px;
+          background: white;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+          margin-bottom: 20px;
+          color: #333;
+          font-size: 1.3rem;
+        }
+        
+        .prediction-table {
+          margin-top: 30px;
         }
         
         .table-container {
@@ -231,14 +349,6 @@ const PredictionChart = ({ investments, monthlyAddition }) => {
           font-weight: bold;
         }
         
-        .chart-container {
-          margin-top: 30px;
-          background: white;
-          padding: 20px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
         .empty-state {
           text-align: center;
           padding: 60px 20px;
@@ -253,6 +363,12 @@ const PredictionChart = ({ investments, monthlyAddition }) => {
         .text-muted {
           color: #6c757d;
           font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+          .stats-grid {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
     </div>

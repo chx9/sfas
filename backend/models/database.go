@@ -35,11 +35,24 @@ func createTables() {
         monthly_addition REAL DEFAULT 0
     );`
 
+    bonusTable := `
+    CREATE TABLE IF NOT EXISTS bonuses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        amount REAL NOT NULL,
+        month INTEGER NOT NULL CHECK (month >= 1 AND month <= 12),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`
+
     if _, err := DB.Exec(investmentTable); err != nil {
         log.Fatal(err)
     }
 
     if _, err := DB.Exec(settingsTable); err != nil {
+        log.Fatal(err)
+    }
+
+    if _, err := DB.Exec(bonusTable); err != nil {
         log.Fatal(err)
     }
 

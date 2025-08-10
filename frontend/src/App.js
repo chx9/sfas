@@ -4,10 +4,12 @@ import InvestmentForm from './components/InvestmentForm';
 import InvestmentList from './components/InvestmentList';
 import PredictionChart from './components/PredictionChart';
 import Settings from './components/Settings';
+import BonusManagement from './components/BonusManagement';
 import { investmentAPI } from './services/api';
 
 function App() {
   const [investments, setInvestments] = useState([]);
+  const [bonuses, setBonuses] = useState([]);
   const [monthlyAddition, setMonthlyAddition] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -84,6 +86,10 @@ function App() {
     setMonthlyAddition(newMonthlyAddition);
   };
 
+  const handleBonusChange = (newBonuses) => {
+    setBonuses(newBonuses);
+  };
+
   if (loading) {
     return (
       <div className="App">
@@ -117,6 +123,8 @@ function App() {
       
       <Settings onSettingsChange={handleSettingsChange} />
       
+      <BonusManagement onBonusChange={handleBonusChange} />
+      
       <InvestmentForm
         onSubmit={handleCreateInvestment}
         initialData={null}
@@ -132,6 +140,7 @@ function App() {
       <PredictionChart 
         investments={investments} 
         monthlyAddition={monthlyAddition}
+        bonuses={bonuses}
       />
 
       <footer className="App-footer">

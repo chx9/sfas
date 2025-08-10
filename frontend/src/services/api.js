@@ -32,11 +32,11 @@ api.interceptors.response.use(
     console.error('API响应错误:', error.response?.data || error.message);
     
     if (error.code === 'ECONNREFUSED') {
-      alert('无法连接到服务器，请确保后端服务已启动 (端口8086)');
+      console.error('无法连接到服务器，请确保后端服务已启动 (端口8086)');
     } else if (error.response?.status >= 500) {
-      alert('服务器内部错误，请稍后重试');
+      console.error('服务器内部错误，请稍后重试');
     } else if (error.response?.status === 404) {
-      alert('请求的资源不存在');
+      console.error('请求的资源不存在');
     }
     
     return Promise.reject(error);
@@ -53,6 +53,13 @@ export const investmentAPI = {
 export const settingsAPI = {
   get: () => api.get('/settings'),
   update: (settings) => api.put('/settings', settings),
+};
+
+export const bonusAPI = {
+  getAll: () => api.get('/bonuses'),
+  create: (bonus) => api.post('/bonuses', bonus),
+  update: (id, bonus) => api.put(`/bonuses/${id}`, bonus),
+  delete: (id) => api.delete(`/bonuses/${id}`),
 };
 
 export default api;
